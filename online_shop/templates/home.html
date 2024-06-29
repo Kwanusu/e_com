@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+Home
+{% endblock title %}
+
+{% block banner-slider %}
+<div class="row container mt-4">
+  <div class="col-md-12 wow fadeInUp" data-wow-duration="1s" data-wow-delay="0.65s" style="animation-duration: 1s; animation-delay: 0.65s; animation-name: none">
+    <div id="carouselExampleSlidesOnly" class="carousel slide" data-bs-ride="carousel">
+      <div class="carousel-inner">
+        <div class="carousel-item active">
+          <img src="{{STATIC_URL}}static/app/css/images/product/laptop.jpg.jpg" class="d-block w-100" alt="..." style="height: 100vh; object-fit: cover;">
+        </div>
+        <div class="carousel-item">
+          <img src="{{STATIC_URL}}static/app/css/images/banner/slider2.jpg" class="d-block w-100" alt="..." style="height: 100vh; object-fit: cover;">
+        </div>
+        <div class="carousel-item">
+          <img src="{{STATIC_URL}}static/app/css/images/banner/slider3.jpg" class="d-block w-100" alt="..." style="height: 100vh; object-fit: cover;">
+        </div>
+        <div class="carousel-item">
+          <img src="{{STATIC_URL}}static/app/css/images/banner/slider4.jpg" class="d-block w-100" alt="..." style="height: 100vh; object-fit: cover;">
+        </div>
+        <div class="carousel-item">
+          <img src="{{STATIC_URL}}static/app/css/images/banner/slider5.jpg" class="d-block w-100" alt="..." style="height: 100vh; object-fit: cover;">
+        </div>
+        <div class="carousel-item">
+          <img src="{{STATIC_URL}}static/app/css/images/banner/slider6.jpg" class="d-block w-100" alt="..." style="height: 100vh; object-fit: cover;">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock banner-slider %}
+
+
+{% block information %}
+<div class="container">
+  <div class="row bg-success text-center p-2 text-white border-bottom shadow">
+    <h1>Products</h1>
+    <small class="fs-5">
+      Innovet Technology offers a wide range of products to suit your needs. 
+      You can browse our site and get the best at unbeatable costs
+    </small>
+  </div>
+</div>
+{% endblock information %}
+{% block content %}
+  <div class="container">
+    <h1 class="text-center">Welcome To the Home Of Timely Deliveries...</h1>
+  </div>
+  <br><br>
+      <div class="row container">
+          <div class="col-md-4 ml-go wow fadeInUp" data-wow-duration="1s"
+            data-wow-delay="0.65" style="animation-duration: 1s; animation-delay: 0.65; 
+            animation-name: none">
+                <div class="smbg">
+                  <a href="{% url 'category' 'EL' %}">
+                    <div class="text-center">
+                      <img src="{{STATIC_URL}}static/app/css/images/product/Camera.jpg.jpg"
+                      class="img-responsive center-block" alt="" width="400" height="400" >
+                      <p class="">Camera</p>
+                </div>
+              </a>
+          </div>
+        </div>
+        <div class="col-md-4 ml-go wow fadeInUp" data-wow-duration="1s"
+          data-wow-delay="0.65" style="animation-duration: 1s; animation-delay: 0.65; 
+          animation-name: none">
+              <div class="smbg">
+                <a href="{% url 'category' 'EL' %}">
+                  <div class="text-center">
+                    <img src="{{STATIC_URL}}static/app/css/images/product/laptop.jpg.jpg"
+                      class="img-responsive center-block" alt="" width="400" height="400" >
+                      <p class="">Laptop</p>
+                  </div>
+                </a>
+              </div>
+        </div>
+        <div class="col-md-4 ml-go wow fadeInUp" data-wow-duration="1s"
+          data-wow-delay="0.65" style="animation-duration: 1s; animation-delay: 0.65; 
+          animation-name: none">
+            <div class="smbg">
+              <a href="{% url 'category' 'EL' %}">
+                <div class="text-center">
+                  <img src="{{STATIC_URL}}static/app/css/images/headphones.jpg"
+                    class="img-responsive center-block" alt="" width="400" height="400" >
+                    <p class="">Headphones</p>
+                </div>
+              </a>
+            </div>
+            <br><br>
+             <div class="col-md-4 ml-go wow fadeInUp" data-wow-duration="1s"
+            data-wow-delay="0.65" style="animation-duration: 1s; animation-delay: 0.65; 
+            animation-name: none">
+                <div class="smbg">
+                  <a href="{% url 'category' 'EL' %}">
+                    <div class="text-center">
+                      <img src="{{STATIC_URL}}"
+                      class="img-responsive center-block" alt="" width="400" height="400" >
+                      <p class="">Smartphone</p>
+                </div>
+              </a>
+          </div>
+        </div>
+        <div class="col-md-4 ml-go wow fadeInUp" data-wow-duration="1s"
+          data-wow-delay="0.65" style="animation-duration: 1s; animation-delay: 0.65; 
+          animation-name: none">
+              <div class="smbg">
+                <a href="{% url 'category' 'EL' %}">
+                  <div class="text-center">
+                    <img src="{STATIC_URL}"
+                      class="img-responsive center-block" alt="" width="400" height="400" >
+                      <p class="">Laptop</p>
+                  </div>
+                </a>
+              </div>
+        </div>
+        <div class="col-md-4 ml-go wow fadeInUp" data-wow-duration="1s"
+          data-wow-delay="0.65" style="animation-duration: 1s; animation-delay: 0.65; 
+          animation-name: none">
+            <div class="smbg">
+              <a href="{% url 'category' 'EL' %}">
+                <div class="text-center">
+                  <img src="{STATIC_URL}"
+                    class="img-responsive center-block" alt="" width="400" height="400" >
+                    <p class="">Smartphone</p>
+                </div>
+              </a>
+            </div>
+        </div>
+      </div>
+  <br/><br/>
+{% endblock content %}

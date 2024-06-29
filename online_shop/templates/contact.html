@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+Contact Us
+{% endblock title %}
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4" style="font-family: Arial;">Contact Us</h1>
+    <div class="row">
+        <div class="col-lg-6">
+            <p style="font-family: Arial, sans-serif; font-size: 18px;">
+                We would love to hear from you! If you have any questions, feedback, or concerns, please feel free to reach out
+                to us using the contact information below or by filling out the contact form.
+            </p>
+            <h4>Contact Information</h4>
+            <p style="font-family: Arial, sans-serif; font-size: 18px;">
+                <strong>Email:</strong> kwanusujoseph@gmail.com<br><br>
+                <strong>Phone:</strong> +123 456 7890<br><br>
+                <strong>Address:</strong> 1234 Dennis Pritt, Nairobi, Kenya
+            </p>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <h4>Contact Form</h4>
+            <form action="{% url 'contact_us' %}" method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="message" class="form-label">Message</label>
+                    <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+ {% load static %}
+ {% block title %}Checkout{% endblock title %}
+ {% block content %}
+ <div class="container">
+     {% if messages %}
+       {% for msg in messages %}
+         <div class="alert alert-danger" role="alert">
+             {{msg}}
+         </div>
+       {% endfor %}
+     {% endif %}
+     <div class="row mt-5">
+         <div class="col-sm-6">
+             <h4>Order Summary</h4>
+             <hr>
+             {% for item in items %}
+               <div class="card mb-2">
+                 <div class="card-body">
+                     <h5>Product: {{item.product.title}}</h5>
+                     <p>Quantity: {{item.quantity}}</p>
+                     <p class="fw-bold">Price: {{item.product.discounted_price}}</p>
+                 </div>
+               </div>
+             {% endfor %}
+             <p class="fw-bold">Total Cost + Kshs. 40 = {{totalamount}}</p>
+             <small>Terms and Conditions: </small>
+         </div>
+         <div class="col-sm-4 offset-sm-1">
+             <h4>Select Shipping Address</h4>
+             <hr>
+             <form id="payment-form">
+                 {% csrf_token %}
+                 {% for ad in add %}
+                 <div class="card">
+                     <div class="card-body">
+                         <h5>{{ ad.name }}</h5>
+                         <p>Mobile: {{ ad.mobile }}</p>
+                         <p>{{ ad.locality}} {{ ad.city }} {{ ad.state }} - {{ad.zipcode}}</p>
+                     </div>
+                 </div>
+                 <div class="form-check mt-2 mb-5">
+                     <input class="form-check-input" type="radio" name="custid" id="custadd{{forloop.counter}}" value="{{ad.id}}">
+                     <label class="form-check-label fw-bold" for="custid{{forloop.counter}}">
+                         Address: {{forloop.counter}}
+                     </label>
+                 </div>
+                 {% endfor %}
+                 <div class="form-check mb-3">
+                     <label for="totalamount" class="form-label">Total Amount</label>
+                     <input type="number" class="form-control" name="totalamount" value={{totalamount}} readonly>
+                 </div>
+                 <div class="text-end">
+                     <button id="submit" type="button" class="btn btn-warning mt-3 px-5 fw-bold">Pay with Card</button>
+                 </div>
+                 <div id="card-element"></div>
+                 <div id="card-errors" role="alert"></div>
+             </form>
+         </div>
+       </div>
+ </div>
+ {% endblock content %}
+ 
+ {% block payment-gateway %}
+ <script src="https://js.stripe.com/v3/"></script>
+ <script>
+     var stripe = Stripe('{{ stripe_publishable_key }}');
+     var elements = stripe.elements();
+     var card = elements.create('card');
+     card.mount('#card-element');
+ 
+     var form = document.getElementById('payment-form');
+     var submitButton = document.getElementById('submit');
+ 
+     submitButton.addEventListener('click', function(event) {
+         event.preventDefault();
+         
+         stripe.confirmCardPayment('{{ client_secret }}', {
+             payment_method: {
+                 card: card,
+                 billing_details: {
+                     name: 'Jenny Rosen',
+                 },
+             }
+         }).then(function(result) {
+             if (result.error) {
+                 var errorElement = document.getElementById('card-errors');
+                 errorElement.textContent = result.error.message;
+             } else {
+                 if (result.paymentIntent.status === 'succeeded') {
+                     form.submit();
+                 }
+             }
+         });
+     });
+ </script>
+ {% endblock payment-gateway %}
+ 
