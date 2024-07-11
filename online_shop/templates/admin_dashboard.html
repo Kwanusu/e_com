@@ -2,5 +2,16 @@
 {% block content %}
 <h2>Admin Dashboard</h2>
 <a href="{% url 'admin_product_list' %}">Manage Products</a>
+<a href="{% url 'admin_product_detail' %}">Manage Products</a>
+<a href="{% url 'admin_product_orders' %}">Manage Products</a>
+<a href="{% url 'admin_product_checkout' %}">Manage Products</a>
+<a href="{% url 'admin_product_form' %}">Manage Products</a>
+<a href="{% url 'admin_product_confirm_delete' %}">Manage Products</a>
+<!-- Add links to other admin sections as needed -->
+{% endblock %}
+{% extends "base.html" %}
+{% block content %}
+<h2>Admin Dashboard</h2>
+<a href="{% url 'admin_product_list' %}">Manage Products</a>
 <!-- Add links to other admin sections as needed -->
 {% endblock %}
