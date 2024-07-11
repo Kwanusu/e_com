@@ -1,29 +1,28 @@
-from django.db.models import Count
 from django.conf import settings
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.views import View
 from .models import Cart, Customer, OrderPlaced, Payment, Product, Wishlist
 from django.contrib import messages
 from django.db.models import Q
-...
-from .models import (
-   Payment 
-)
-import stripe
-stripe.api_key = settings.STRIPE_PUBLISHABLE_KEY
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from .forms import CustomerProfileForm, CustomerRegistrationForm
+from .forms import CustomerProfileForm, CustomerRegistrationForm, LoginForm
+from django.core.mail import send_mail
+from django.contrib.auth import authenticate, login
+import stripe
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # Create your views here.
+
 @login_required
 def home(request):
     totalItem = 0
     wishItem = 0
     if request.user.is_authenticated:
-        totalItem = len(Cart.objects.filter(user=request.user))
-        wishItem = len(Wishlist.objects.filter(user=request.user))
+        totalItem = Cart.objects.filter(user=request.user).count()
+        wishItem = Wishlist.objects.filter(user=request.user).count()
     return render(request, 'home.html', locals())
 
 @login_required
@@ -31,8 +30,8 @@ def about(request):
     totalItem = 0
     wishItem = 0
     if request.user.is_authenticated:
-        totalItem = len(Cart.objects.filter(user=request.user))
-        wishItem = len(Wishlist.objects.filter(user=request.user))
+        totalItem = Cart.objects.filter(user=request.user).count()
+        wishItem = Wishlist.objects.filter(user=request.user).count()
     return render(request, 'about.html', locals())
 
 @login_required
@@ -41,18 +40,18 @@ def search(request):
     totalItem = 0
     wishItem = 0
     if request.user.is_authenticated:
-        totalItem = len(Cart.objects.filter(user=request.user))
-        wishItem = len(Wishlist.objects.filter(user=request.user))
+        totalItem = Cart.objects.filter(user=request.user).count()
+        wishItem = Wishlist.objects.filter(user=request.user).count()
     product = Product.objects.filter(Q(title__icontains=query))
-    return render(request,'search.html', locals())
+    return render(request, 'search.html', locals())
 
 @login_required
 def contact(request):
     totalItem = 0
     wishItem = 0
     if request.user.is_authenticated:
-        totalItem = len(Cart.objects.filter(user=request.user))
-        wishItem = len(Wishlist.objects.filter(user=request.user))
+        totalItem = Cart.objects.filter(user=request.user).count()
+        wishItem = Wishlist.objects.filter(user=request.user).count()
     return render(request, 'contact.html', locals())
 
 def contact_us(request):
@@ -73,20 +72,19 @@ def contact_us(request):
 def contact_us_success(request):
     return render(request, 'contact_us_success.html')
 
-
-@method_decorator(login_required,name='dispatch')
+@method_decorator(login_required, name='dispatch')
 class CategoryView(View):
     def get(self, request, val):
         totalItem = 0
         wishItem = 0
         if request.user.is_authenticated:
-           totalItem = len(Cart.objects.filter(user=request.user))
-           wishItem = len(Wishlist.objects.filter(user=request.user))
+           totalItem = Cart.objects.filter(user=request.user).count()
+           wishItem = Wishlist.objects.filter(user=request.user).count()
         product = Product.objects.filter(category=val)
         title = Product.objects.filter(category=val).values('title')
         return render(request, 'category.html', locals())
 
-@method_decorator(login_required,name='dispatch')    
+@method_decorator(login_required, name='dispatch')    
 class CategoryTitle(View):
     def get(self, request, val):
         product = Product.objects.filter(title=val)
@@ -94,30 +92,30 @@ class CategoryTitle(View):
         totalItem = 0
         wishItem = 0
         if request.user.is_authenticated:
-           totalItem = len(Cart.objects.filter(user=request.user))
-           wishItem = len(Wishlist.objects.filter(user=request.user)) 
+           totalItem = Cart.objects.filter(user=request.user).count()
+           wishItem = Wishlist.objects.filter(user=request.user).count() 
         return render(request, 'category.html', locals())
 
-@method_decorator(login_required,name='dispatch')     
+@method_decorator(login_required, name='dispatch')     
 class ProductDetail(View):
     def get(self, request, pk):
         product = Product.objects.get(pk=pk)
-        wishlist = Wishlist.objects.filter(Q(product=product) & Q(user= request.user)) 
+        wishlist = Wishlist.objects.filter(Q(product=product) & Q(user=request.user)) 
         totalItem = 0
         wishItem = 0
         if request.user.is_authenticated:
-           totalItem = len(Cart.objects.filter(user=request.user))
-           wishItem = len(Wishlist.objects.filter(user=request.user))
+           totalItem = Cart.objects.filter(user=request.user).count()
+           wishItem = Wishlist.objects.filter(user=request.user).count()
         return render(request, 'product_detail.html', locals())
-    
+
 class CustomerRegistrationView(View):
     def get(self, request):
         form = CustomerRegistrationForm()
         totalItem = 0
         wishItem = 0
         if request.user.is_authenticated:
-           totalItem = len(Cart.objects.filter(user=request.user))
-           wishItem = len(Wishlist.objects.filter(user=request.user))
+           totalItem = Cart.objects.filter(user=request.user).count()
+           wishItem = Wishlist.objects.filter(user=request.user).count()
         return render(request, 'customerregistrationform.html', locals())     
     def post(self, request): 
         form = CustomerRegistrationForm(request.POST)
@@ -127,16 +125,16 @@ class CustomerRegistrationView(View):
         else:
             messages.warning(request, "Invalid Input Data")
         return render(request, 'customerregistrationform.html', locals())              
-     
-@method_decorator(login_required,name='dispatch')             
+
+@method_decorator(login_required, name='dispatch')             
 class ProfileView(View):
     def get(self, request):
         form = CustomerProfileForm()
         totalItem = 0
         wishItem = 0
         if request.user.is_authenticated:
-           totalItem = len(Cart.objects.filter(user=request.user))
-           wishItem = len(Wishlist.objects.filter(user=request.user))
+           totalItem = Cart.objects.filter(user=request.user).count()
+           wishItem = Wishlist.objects.filter(user=request.user).count()
         return render(request, 'profile.html', locals()) 
     def post(self, request):
         form = CustomerProfileForm(request.POST)
@@ -149,37 +147,36 @@ class ProfileView(View):
             state = form.cleaned_data['state']
             zipcode = form.cleaned_data['zipcode']
              
-            reg = Customer(user=user, name=name, locality=locality, mobile=mobile, city=city, state=state, 
-            zipcode=zipcode)
+            reg = Customer(user=user, name=name, locality=locality, mobile=mobile, city=city, state=state, zipcode=zipcode)
             reg.save()
             messages.success(request, "Congratulations! Profile Set Successfully")
         else:
             messages.warning(request, "Invalid Input Data")
         return render(request, 'profile.html', locals())
-     
+
 @login_required     
 def address(request):
     add = Customer.objects.filter(user=request.user)
     totalItem = 0
     wishItem = 0
     if request.user.is_authenticated:
-        totalItem = len(Cart.objects.filter(user=request.user))
-        wishItem = len(Wishlist.objects.filter(user=request.user))
+        totalItem = Cart.objects.filter(user=request.user).count()
+        wishItem = Wishlist.objects.filter(user=request.user).count()
     return render(request, 'address.html', locals())
 
-@method_decorator(login_required,name='dispatch')
-class updateAddress(View):
+@method_decorator(login_required, name='dispatch')
+class UpdateAddress(View):
     def get(self, request, pk):
         add = Customer.objects.get(pk=pk)
         form = CustomerProfileForm(instance=add)
         totalItem = 0
         wishItem = 0
         if request.user.is_authenticated:
-           totalItem = len(Cart.objects.filter(user=request.user))
-           wishItem = len(Wishlist.objects.filter(user=request.user))
+           totalItem = Cart.objects.filter(user=request.user).count()
+           wishItem = Wishlist.objects.filter(user=request.user).count()
         return render(request, 'updateAddress.html', locals())
     
-    def post(self, request,pk):
+    def post(self, request, pk):
         form = CustomerProfileForm(request.POST)      
         if form.is_valid():
             add = Customer.objects.get(pk=pk)
@@ -193,12 +190,11 @@ class updateAddress(View):
             messages.success(request, "Congratulations! Profile Set Successfully")
         else:
             messages.warning(request, "Invalid Input Data")
-        return redirect("/address")
-    
+        return redirect('/address')
+
 def product_list(request):
     products = Product.objects.all()
     return render(request, 'product_list.html', {'products': products})
-    
 
 @login_required    
 def add_to_cart(request):
@@ -206,23 +202,20 @@ def add_to_cart(request):
     product_id = request.GET.get('prod_id')
     product = Product.objects.get(id=product_id)
     Cart(user=user, product=product).save()
-    return redirect("/show_cart" )
-    
+    return redirect("/show_cart")
+
 @login_required    
 def show_cart(request):
     user = request.user
     cart = Cart.objects.filter(user=user)
-    amount = 0
-    for p in cart:
-        value = p.quantity * p.product.discounted_price
-        amount = amount + value
-    totalamount =amount + 40
+    amount = sum(p.quantity * p.product.discounted_price for p in cart)
+    totalamount = amount + 40
     totalItem = 0
     wishItem = 0
     if request.user.is_authenticated:
-        totalItem = len(Cart.objects.filter(user=request.user))
-        wishItem = len(Wishlist.objects.filter(user=request.user))      
-    return render(request,"add_to_cart.html", locals())
+        totalItem = Cart.objects.filter(user=request.user).count()
+        wishItem = Wishlist.objects.filter(user=request.user).count()      
+    return render(request, "add_to_cart.html", locals())
 
 @login_required
 def show_wishlist(request):
@@ -230,50 +223,24 @@ def show_wishlist(request):
     totalItem = 0
     wishItem = 0
     if request.user.is_authenticated:
-        totalItem = len(Cart.objects.filter(user=request.user))
-        wishItem = len(Wishlist.objects.filter(user=request.user))      
-    return render(request,"wishlist.html", locals())
-
-    
-
-# @method_decorator(login_required,name='dispatch')
-# class Checkout(View):
-#     def get(self, request):
-#         totalItem = 0
-#         wishItem = 0
-#         if request.user.is_authenticated:
-#            totalItem = len(Cart.objects.filter(user=request.user))
-#            wishItem = len(Wishlist.objects.filter(user=request.user))
-#         user = request.user
-#         add = Customer.objects.filter(user=user)
-#         cart = Cart.objects.filter(user=user)
-#         amount = 0
-#         for p in cart:
-#             value = p.quantity * p.product.discounted_price
-#             amount = amount + value
-#         totalamount =amount + 40
-#         stripeamount = int(totalamount * 100)
-#         client = stripe.Client(auth=(settings.STRIPE_KEY_ID, settings.STRIPE_KEY_SECRET))
-#         data = {'amount': stripeamount, 'currency': "Kshs", 'receipt': "order_rcptid_12"}    
-#         return render(request, 'checkout.html',locals())
-
+        totalItem = Cart.objects.filter(user=request.user).count()
+        wishItem = Wishlist.objects.filter(user=request.user).count()      
+    return render(request, "wishlist.html", locals())
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+@method_decorator(login_required, name='dispatch')
 class Checkout(View):
     def get(self, request):
         totalItem = 0
         wishItem = 0
         if request.user.is_authenticated:
-            totalItem = len(Cart.objects.filter(user=request.user))
-            wishItem = len(Wishlist.objects.filter(user=request.user))
+            totalItem = Cart.objects.filter(user=request.user).count()
+            wishItem = Wishlist.objects.filter(user=request.user).count()
         user = request.user
         add = Customer.objects.filter(user=user)
         cart = Cart.objects.filter(user=user)
-        amount = 0
-        for p in cart:
-            value = p.quantity * p.product.discounted_price
-            amount = amount + value
+        amount = sum(p.quantity * p.product.discounted_price for p in cart)
         totalamount = amount + 40
         stripeamount = int(totalamount * 100)
 
@@ -294,105 +261,127 @@ class Checkout(View):
         }
 
         return render(request, 'checkout.html', context)
-    
+
+
 def success_view(request):
     return render(request, 'success.html')
 
 def cancel_view(request):
-    return render(request, 'cancel.html')    
+    return render(request, 'cancel.html')
 
 @login_required    
 def payment_done(request):
-    order_id = request.GET.get('order_id')
-    payment_id = request.GET.get('payment_id')
-    cust_id = request.GET.get('cust_id')    
-    user = request.user
-    customer = Customer.objects.get(id=cust_id)
-    payment = Payment.objects.get(stripe_order_id=order_id)
-    payment.paid = True
-    payment.stripe_payment_id = payment_id
-    payment.save()
-    cart = Cart.objects.filter(user=user)
-    for c in cart:
-        OrderPlaced(user=user,customer=customer,product=c.product,quantity=c.quantity,payment=payment).save()
-        c.delete()
-        
-    return redirect('orders')
+    if request.method == "POST":
+        order_id = request.POST.get('order_id')
+        payment_id = request.POST.get('payment_id')
+        cust_id = request.POST.get('cust_id')
+
+        if not all([order_id, payment_id, cust_id]):
+            messages.error(request, "Missing payment details.")
+            return redirect('check_out')
+
+        try:
+            user = request.user
+            customer = get_object_or_404(Customer, id=cust_id)
+            payment = get_object_or_404(Payment, stripe_order_id=order_id)
+
+            # Update payment details
+            payment.paid = True
+            payment.stripe_payment_id = payment_id
+            payment.save()
+
+            # Process cart items into orders
+            cart_items = Cart.objects.filter(user=user)
+            for item in cart_items:
+                OrderPlaced.objects.create(
+                    user=user,
+                    customer=customer,
+                    product=item.product,
+                    quantity=item.quantity,
+                    payment=payment
+                )
+                item.delete()
+
+            messages.success(request, "Payment successful! Your order has been placed.")
+            return redirect('orders')
+
+        except Customer.DoesNotExist:
+            messages.error(request, "Customer not found.")
+            return redirect('checkout')
+
+        except Payment.DoesNotExist:
+            messages.error(request, "Payment not found.")
+            return redirect('checkout')
+
+        except Exception as e:
+            messages.error(request, f"An error occurred: {e}")
+            return redirect('checkout')
+
+    return redirect('checkout')
 
 @login_required
 def orders(request):
     totalItem = 0
     wishItem = 0
     if request.user.is_authenticated:
-        totalItem = len(Cart.objects.filter(user=request.user))
-        wishItem = len(Wishlist.objects.filter(user=request.user))
+        totalItem = Cart.objects.filter(user=request.user).count()
+        wishItem = Wishlist.objects.filter(user=request.user).count()
     order_placed = OrderPlaced.objects.filter(user=request.user)
-    return render(request, 'orders.html',locals())    
+    return render(request, 'orders.html', locals())
 
+@login_required
 def plus_Cart(request):
     if request.method == "GET":
         prod_id = request.GET['prod_id']
-        c= Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
-        c.quantity+=1
+        c = Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
+        c.quantity += 1
         c.save()
         user = request.user
         cart = Cart.objects.filter(user=user)
-        amount = 0
-        for p in cart:
-            value = p.quantity * p.product.discounted_price
-            amount = amount + value
-        totalamount =amount + 40 
-        data={
+        amount = sum(p.quantity * p.product.discounted_price for p in cart)
+        totalamount = amount + 40 
+        data = {
             'quantity': c.quantity,
             'amount': amount,
             'totalamount': totalamount 
         }
         return JsonResponse(data)
-    
 
+@login_required
 def minus_Cart(request):
     if request.method == "GET":
         prod_id = request.GET['prod_id']
-        c= Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
-        c.quantity-=1
+        c = Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
+        c.quantity -= 1
         c.save()
         user = request.user
         cart = Cart.objects.filter(user=user)
-        amount = 0
-        for p in cart:
-            value = p.quantity * p.product.discounted_price
-            amount = amount + value
-        totalamount =amount + 40 
-        data={
+        amount = sum(p.quantity * p.product.discounted_price for p in cart)
+        totalamount = amount + 40 
+        data = {
             'quantity': c.quantity,
             'amount': amount,
             'totalamount': totalamount 
         }
         return JsonResponse(data)
-    
-    
+
 @login_required    
 def remove_Cart(request):
     if request.method == "GET":
         prod_id = request.GET['prod_id']
-        c= Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
-        c.quantity+=1
+        c = Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
         c.delete()
         user = request.user
         cart = Cart.objects.filter(user=user)
-        amount = 0
-        for p in cart:
-            value = p.quantity * p.product.discounted_price
-            amount = amount + value
-        totalamount =amount + 40 
-        data={
+        amount = sum(p.quantity * p.product.discounted_price for p in cart)
+        totalamount = amount + 40 
+        data = {
             'quantity': c.quantity,
             'amount': amount,
             'totalamount': totalamount 
         }
         return JsonResponse(data)
-    
-    
+
 @login_required    
 def plus_wishlist(request):
     if request.method == 'GET':
@@ -400,23 +389,66 @@ def plus_wishlist(request):
         product = Product.objects.get(id=prod_id)
         user = request.user
         Wishlist(user=user, product=product).save()
-        data ={
-            'message':'Wishlist Added Successfully',
+        data = {
+            'message': 'Wishlist Added Successfully',
         }    
         return JsonResponse(data)
-    
+
 @login_required    
 def minus_wishlist(request):
     if request.method == 'GET':
         prod_id = request.GET['prod_id']
         product = Product.objects.get(id=prod_id)
         user = request.user
-        Wishlist(user=user, product=product).delete()
-        data ={
-            'message':'Wishlist Removed Successfully',
+        Wishlist.objects.filter(user=user, product=product).delete()
+        data = {
+            'message': 'Wishlist Removed Successfully',
         }    
         return JsonResponse(data)
 
+@login_required
+def profile_view(request):
+    if request.method == 'POST':
+        form = CustomerProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('profile')
+    else:
+        form = CustomerProfileForm(instance=request.user)
+    return render(request, 'custom_profile.html', {'form': form})
 
+def login_view(request):
+    if request.method == 'POST':
+        form = LoginForm(request, data=request.POST)
+        role = request.POST.get('role')
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                if role == 'admin' and user.is_staff:
+                    return redirect('admin:index')  # Redirect to admin dashboard
+                return redirect('user_dashboard')  # Redirect to user dashboard
+            else:
+                messages.error(request, 'Invalid username or password')
+        else:
+            messages.error(request, 'Invalid username or password')
+    else:
+        form = LoginForm()
+    return render(request, 'login.html', {'form': form})
 
+@login_required
+def user_dashboard(request):
+    return render(request, 'user_dashboard.html')
 
+from rest_framework import viewsets
+from .models import Product
+from .serializers import ProductSerializer
+
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    
+    
+    

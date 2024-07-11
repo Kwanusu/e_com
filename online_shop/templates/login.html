@@ -12,18 +12,24 @@ Login
          <hr>
          <form action="" method="POST" novalidate class="shadow p-5">
             {% csrf_token %}
-            {% for fm in form  %}
-               {{fm.label_tag}} {{fm}} <small class="text-danger">
-                {{fm.errros| striptags }}
+            {% for fm in form %}
+               {{ fm.label_tag }} {{ fm }} <small class="text-danger">
+                {{ fm.errors|striptags }}
                </small>
                <br>
             {% endfor %}
+            <div class="form-group">
+                <label for="role">Login as:</label>
+                <select name="role" id="role" class="form-control">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
             <small><a href="{% url 'password_reset' %}">Forgot Password</a></small>
             <br>
             <input type="submit" class="btn btn-primary mt-4" value="Login"> 
             <div class="text-center text-primary fw-bold">
-                <small> New User ? <a href="{% url 'customerregistration' %}"
-                    class="text-danger"> Create an Account </a> </small>
+                <small>New User? <a href="{% url 'customerregistration' %}" class="text-danger">Create an Account</a></small>
             </div>
             {% if form.non_field_errors %}
                {% for error in form.non_field_errors %}
@@ -31,18 +37,14 @@ Login
                {% endfor %}
             {% endif %}
             {% if messages %}
-                   {% for msg in messages %}
-                       <div class="alert alert-{{msg.tags}}" role="alert">
-                           {{msg}}
-                       </div>
-                   {% endfor %}
-                {% endif %}
+               {% for msg in messages %}
+                   <div class="alert alert-{{ msg.tags }}" role="alert">
+                       {{ msg }}
+                   </div>
+               {% endfor %}
+            {% endif %}
          </form>
        </div>
     </div>
 </div>
-
 {% endblock content %}
-
-
-

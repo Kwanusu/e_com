@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, UsernameField, PasswordChangeForm,SetPasswordForm,PasswordResetForm
 from django.contrib.auth.models import User
 from .models import Customer
+from .models import Payment
 
 class LoginForm(AuthenticationForm):
     username = UsernameField(widget=forms.TextInput(attrs={'autofocus': 'True',
@@ -51,3 +52,16 @@ class CustomerProfileForm(forms.ModelForm):
             'state':forms.Select(attrs={'class': 'form-control'}),
             'zipcode':forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+class PaymentForm(forms.ModelForm):
+    class Meta:
+        model = Payment
+        fields = ['amount', 'stripe_order_id', 'stripe_payment_status', 'stripe_payment_id']
+
+        widgets = {
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'stripe_order_id': forms.TextInput(attrs={'class': 'form-control'}),
+            'stripe_payment_status': forms.TextInput(attrs={'class': 'form-control'}),
+            'stripe_payment_id': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+        
