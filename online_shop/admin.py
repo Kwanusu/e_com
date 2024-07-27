@@ -7,12 +7,12 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from .forms import CustomerRegistrationForm, MyPasswordChangeForm
 from django.contrib.auth.forms import UserChangeForm
+from .models import CarouselImage
 
 # Register your models here.
 @admin.register(Product)
 class ProductModelAdmin(admin.ModelAdmin):
     list_display = ['id', 'title', 'discounted_price', 'category', 'product_image']
-    
     
 @admin.register(Customer)
 class CustomerModelAdmin(admin.ModelAdmin):
@@ -74,8 +74,10 @@ class CustomUserAdmin(UserAdmin):
     )
     search_fields = ('username', 'email')
     ordering = ('username',)
+    
+@admin.register(CarouselImage)
+class CarouselImageAdmin(admin.ModelAdmin):
+    pass   
 
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
-    
-  

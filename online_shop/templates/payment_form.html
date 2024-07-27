@@ -35,3 +35,41 @@
     </div>
 </div>
 {% endblock content %}
+
+{% block payment-gateway %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var stripe = Stripe('{{ stripe_publishable_key }}');
+        var elements = stripe.elements();
+        var cardElement = elements.create('card');
+        cardElement.mount('#card-element');
+    
+        var form = document.getElementById('payment-form');
+        var submitButton = document.getElementById('submit');
+    
+        submitButton.addEventListener('click', function(event) {
+            event.preventDefault();
+    
+            stripe.confirmCardPayment('{{ client_secret }}', {
+                payment_method: {
+                    card: cardElement,
+                    billing_details: {
+                        name: 'Joseph Kwanusu', // Replace with actual billing details if needed
+                    },
+                }
+            }).then(function(result) {
+                if (result.error) {
+                    var errorElement = document.getElementById('card-errors');
+                    errorElement.textContent = result.error.message;
+                } else {
+                    if (result.paymentIntent.status === 'succeeded') {
+                        form.submit();
+                    }
+                }
+            });
+        });
+    });
+    
+</script>
+{% endblock payment-gateway %}

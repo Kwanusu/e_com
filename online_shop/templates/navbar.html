@@ -1,3 +1,4 @@
+{% load static %}
 <nav class="navbar navbar-expand-lg navbar-dark bg-success fixed-top mb-4">
     <div class="container-fluid">
         <a class="navbar-brand" href="{% url 'home' %}">Innovet Tech</a>
@@ -6,10 +7,10 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                {% if request.user.is_authenticated %}
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="/">Home</a>
                 </li>
+                {% if request.user.is_authenticated %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownProducts" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Products
@@ -29,6 +30,9 @@
                     </ul>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link text-white" href="/product_list">List</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link text-white" href="{% url 'about' %}">About Us</a>
                 </li>
                 <li class="nav-item">
@@ -46,16 +50,20 @@
                 {% if request.user.is_authenticated %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdownProfile" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Profile
+                        {{ request.user.username }}
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdownProfile">
                         <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
                         <li><a class="dropdown-item" href="{% url 'orders' %}">Orders</a></li>
                         <li><a class="dropdown-item" href="{% url 'passwordchange' %}">Change Password</a></li>
-                        <li><a class="dropdown-item" href="{% url 'login' %}">Logout</a></li>
+                        <li>
+                            <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
+                                {% csrf_token %}
+                            </form>
+                            <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
+                        </li>
                     </ul>
                 </li>
-
                 <li class="nav-item mx-2">
                     <a href="{% url 'show_cart' %}" class="nav-link text-white">
                         <span class="badge bg-danger">{% if totalitem > 0 %}{{ totalitem }}{% endif %}</span> Cart

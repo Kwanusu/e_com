@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Activate Your Account{% endblock title %}
+
+{% block content %}
+{% autoescape off %}
+<p>Hi {{ user.username }},</p>
+<p>Please click the link below to verify your account:</p>
+<p><a href="http://{{ domain }}{% url 'activate' uidb64=uid token=token %}">Activate your account</a></p>
+{% endautoescape %}
+{% endblock content %}
+
+{% block body %}
+<!-- Additional body content, if needed -->
+{% endblock body %}
+
+{% block footer %}
+<!-- Footer content, if needed -->
+{% endblock footer %}

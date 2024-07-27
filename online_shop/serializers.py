@@ -1,20 +1,21 @@
+from django.forms import ValidationError
 from rest_framework import serializers
-from .models import CATEGORY_CHOICES, STATE_CHOICES, STATUS_CHOICES, Cart, Customer, OrderPlaced, Payment, Product, Wishlist
-from django.contrib.auth.models import User
+from .models import  STATE_CHOICES, STATUS_CHOICES, Cart, Customer, OrderPlaced, Payment, Product, Wishlist
+from django.contrib.auth.models import User       
+from rest_framework.validators import UniqueValidator
+from django.contrib.auth.password_validation import validate_password
+from .models import CarouselImage   
+from django.contrib.auth import get_user_model, authenticate
+
 
 class ProductSerializer(serializers.ModelSerializer):
-    title = serializers.CharField(max_length=100)
-    selling_price =serializers.FloatField()
-    discounted_price = serializers.FloatField()
-    description = serializers.DictField()
-    composition = serializers.DictField(default='')
-    prodapp = serializers.DictField(default='')
-    category = serializers.ChoiceField(choices=CATEGORY_CHOICES)
-    product_image = serializers.ImageField()
-    
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = ['title', 'selling_price', 'discounted_price', 'description', 'composition', 'prodapp', 'category', 'product_image']
+class ProductDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['title', 'selling_price', 'discounted_price', 'description', 'composition', 'prodapp', 'category', 'product_image']
     
     
 class CustomerSerializer(serializers.ModelSerializer):
@@ -50,9 +51,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = '__all__'
-
-        
-    
+  
 class OrderPlacedSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     customer = serializers.PrimaryKeyRelatedField(queryset=Customer.objects.all())
@@ -74,3 +73,64 @@ class WishlistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wishlist
         fields = '__all__'
+
+
+UserModel = get_user_model()
+class UserLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
+    
+    def check_user(self, clean_data):
+        user = authenticate(username=clean_data['email'], password=clean_data['password'])
+        if not user: 
+            raise ValidationError('User does not exist')
+        return user
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserModel
+        fields = ('email', 'username')                   
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    password1 = serializers.CharField(write_only=True, required=True)
+    password2 = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password1', 'password2')  # Include all necessary fields
+
+    def validate(self, attrs):
+        if attrs['password1'] != attrs['password2']:
+            raise serializers.ValidationError({"password": "Password fields didn't match."})
+        return attrs
+
+    def create(self, validated_data):
+        user = User(
+            username=validated_data['username'],
+            email=validated_data['email'],
+        )
+        user.set_password(validated_data['password1'])
+        user.save()
+        return user
+class PasswordChangeSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password1 = serializers.CharField(required=True)
+    new_password2 = serializers.CharField(required=True)
+
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class SetPasswordSerializer(serializers.Serializer):
+    new_password1 = serializers.CharField(required=True)
+    new_password2 = serializers.CharField(required=True)
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = ['name', 'locality', 'city', 'mobile', 'state', 'zipcode']
+
+class CarouselImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CarouselImage
+        fields = ('id', 'src', 'alt')  

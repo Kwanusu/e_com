@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}{% endblock title %}
+
+{% block conntent %}
+
+{% autoescape off %}
+Hi  {{user.username}}
+Ooops!! Something went wrong!
+http://{{domain}} {% url 'activate' uidb64=uid token=token %}
+{% endautoescape %}
+
+{% endblock conntent %}
+
+{% block body %}
+
+{% endblock body %}
+
+
+
+{% block footer %}
+
+{% endblock footer %}
+
