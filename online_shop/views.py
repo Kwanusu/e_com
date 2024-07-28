@@ -1,3 +1,4 @@
+import stripe
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
@@ -10,7 +11,6 @@ from django.utils.decorators import method_decorator
 from .forms import CustomerProfileForm, CustomerRegistrationForm, LoginForm, PaymentForm
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate, login
-import stripe
 from .models import CarouselImage
 from django.shortcuts import render, redirect
 from django.core.mail import EmailMessage
@@ -263,6 +263,15 @@ def add_to_cart(request):
     product = Product.objects.get(id=product_id)
     Cart(user=user, product=product).save()
     return redirect("/show_cart")
+
+@login_required    
+def add_to_wishlist(request):
+    user = request.user
+    product_id = request.GET.get('prod_id')
+    print('prod_id')
+    product = Product.objects.get(id=product_id)
+    Wishlist(user=user, product=product).save()
+    return redirect("/show_wishlist")
 
 @login_required    
 def show_cart(request):

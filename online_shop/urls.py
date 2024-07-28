@@ -62,6 +62,7 @@ urlpatterns = [
     path('contact/success/', views.contact_us_success, name='contact_us_success'),
     path('updateAddress/<int:pk>/', views.UpdateAddress.as_view(), name='updateAddress'),
     path('logout/', auth_view.LogoutView.as_view(next_page='login'), name='logout'),
+    path('add_to_wishlist/', views.add_to_wishlist, name='add_to_wishlist'),
     path('add_to_cart/', views.add_to_cart, name='add_to_cart'),
     path('update_cart_quantity/', views.update_cart_quantity, name='update_cart_quantity'),
     path('show_cart/', views.show_cart, name='show_cart'),
