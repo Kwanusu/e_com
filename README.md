@@ -29,18 +29,20 @@ These instructions will get you a copy of the project up and running on your loc
 
 1. ## Clone the repository:
 
-   git clone https://github.com/your-username/commerce.git
+   git clone https://github.com/Kwanusu/e_com.git
    cd commerce
 ### Create a virtual environment:
 
-
+```sh
 python -m venv venv
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-Install the dependencies:
+```
+## Install the dependencies:
 
-
+```sh
 pip install -r requirements.txt
-Set up the environment variables. Create a .env file in the project root and add the following:
+```
+## Set up the environment variables. Create a .env file in the project root and add the following:
 
 ## .env
 create .env file in your root directory to store environment variables
@@ -54,23 +56,23 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 ##  Apply the migrations:
 
 # To migrate run the commands:
-
+```sh
 py manage.py makemigrations
 
 python manage.py migrate
-
+```
 ## Create a superuser:
-
+```sh
 python manage.py createsuperuser
-
+```
 ## Collect static files:
-
+```sh
 python manage.py collectstatic
-
+```
 ## Run the development server:
-
+```sh
 python manage.py runserver
-
+```
 **Configuration**
 Settings
 The main settings for the project are located in commerce/settings.py. Key settings include:
@@ -87,9 +89,9 @@ The main settings for the project are located in commerce/settings.py. Key setti
 
 ## Usage
 Run the Django development server:
-
+```sh
 python manage.py runserver
-
+```
 Navigate to http://localhost:8000 to view the application.
 
 ## Contributing
@@ -99,7 +101,7 @@ Contributions are welcome! Please follow these steps to contribute:
 1. Fork the repository.
 2. Create a new branch (git checkout -b feature/foo).
 3. Make your changes.
-4. Commit your changes (git commit -am 'Add some foo').
+4. Commit your changes (git commit -m 'Add some foo').
 5. Push to the branch (git push origin feature/foo).
 6. Open a pull request.
 
