@@ -21,6 +21,7 @@ from django.contrib.auth.tokens import default_token_generator as generate_token
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
+from django.core.mail import EmailMultiAlternatives
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -125,7 +126,15 @@ class CustomerRegistrationView(View):
         if request.user.is_authenticated:
             totalItem = Cart.objects.filter(user=request.user).count()
             wishItem = Wishlist.objects.filter(user=request.user).count()
-        return render(request, 'customerregistrationform.html', locals())     
+        return render(request, 'customerregistrationform.html', locals()) 
+    def post(self, request): 
+        form = CustomerRegistrationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Congratulations! User Register Successful")
+        else:
+            messages.warning(request, "Invalid Input Data")
+        return render(request, 'customerregistrationform.html', locals())    
 
 def password_reset_request(request):
     if request.method == 'POST':
@@ -133,14 +142,29 @@ def password_reset_request(request):
         try:
             user = User.objects.get(email=email)
             email_subject = "Password Reset Requested"
-            message = render_to_string("password_reset_email.html", {
+            context = {
                 'user': user,
                 'domain': '127.0.0.1:8000',
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'token': default_token_generator.make_token(user),
-            })
-            email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
+            }
+            
+            text_content = render_to_string("password_reset_email.html", context)
+            html_content = render_to_string("password_reset_email.html", context)
+            
+            # message = render_to_string("password_reset_email.html", {
+            #     'user': user,
+            #     'domain': '127.0.0.1:8000',
+            #     'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            #     'token': default_token_generator.make_token(user),
+            # })
+            email_message = EmailMultiAlternatives(email_subject, text_content, settings.EMAIL_HOST_USER, [email])
+            email_message.attach_alternative(html_content, "text/html")
             email_message.send()
+            
+            
+            # email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
+            # email_message.send()
             messages.success(request, 'A link to reset your password has been sent to your email.')
             return redirect('login')
         except User.DoesNotExist:
