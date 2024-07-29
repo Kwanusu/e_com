@@ -495,101 +495,94 @@ def orders(request):
         order_placed = OrderPlaced.objects.filter(user=request.user)
     return render(request, 'orders.html', locals())
 
-@login_required
 def plus_Cart(request):
     if request.method == "GET":
-        product_id = request.GET.get('prod_id')
-        print('prod_id')
-        c = Cart.objects.get(Q(product=product_id) & Q(user=request.user))
-        c.quantity += 1
-        c.save()
-        user = request.user
-        cart = Cart.objects.filter(user=user)
-        amount = sum(p.quantity * p.product.discounted_price for p in cart)
-        totalamount = amount + 40 
-        data = {
-            'quantity': c.quantity,
-            'amount': amount,
-            'totalamount': totalamount 
-        }
+        prod_id = request.GET.get('prod_id')
+        try:
+            c = Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
+            c.quantity += 1
+            c.save()
+            user = request.user
+            cart = Cart.objects.filter(user=user)
+            amount = sum(p.quantity * p.product.discounted_price for p in cart)
+            totalamount = amount + 40
+            data = {
+                'quantity': c.quantity,
+                'amount': amount,
+                'totalamount': totalamount
+            }
+        except Cart.DoesNotExist:
+            data = {
+                'error': 'Cart item not found'
+            }
         return JsonResponse(data)
 
-@login_required
-def minus_cart(request):
+def minus_Cart(request):
     if request.method == "GET":
-        product_id = request.GET.get('prod_id')
-        print('prod_id')
-        c = Cart.objects.get(Q(product=product_id) & Q(user=request.user))
-        c.quantity -= 1
-        c.save()
-        user = request.user
-        print(f'User: {user}')
-        cart = Cart.objects.filter(user=user)
-        amount = sum(p.quantity * p.product.discounted_price for p in cart)
-        totalamount = amount + 40 
-        data = {
-            'quantity': c.quantity,
-            'amount': amount,
-            'totalamount': totalamount 
-        }
+        prod_id = request.GET.get('prod_id')
+        try:
+            c = Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
+            if c.quantity > 1:
+                c.quantity -= 1
+                c.save()
+            user = request.user
+            cart = Cart.objects.filter(user=user)
+            amount = sum(p.quantity * p.product.discounted_price for p in cart)
+            totalamount = amount + 40
+            data = {
+                'quantity': c.quantity,
+                'amount': amount,
+                'totalamount': totalamount
+            }
+        except Cart.DoesNotExist:
+            data = {
+                'error': 'Cart item not found'
+            }
         return JsonResponse(data)
 
 @login_required
-
 def remove_Cart(request):
     if request.method == "GET":
-        product_id = request.GET.get('prod_id')
-        
-        if not product_id:
-            return JsonResponse({'error': 'Product ID is required'}, status=400)
-        
-        # Fetch the cart items for the given product and user
-        cart_items = Cart.objects.filter(Q(product_id=product_id) & Q(user=request.user))
-        
-        if not cart_items.exists():
-            return JsonResponse({'error': 'Cart item does not exist'}, status=404)
-        
-        # Delete all matching cart items
-        cart_items.delete()
-        
-        # Calculate the total cart amount
-        cart = Cart.objects.filter(user=request.user)
-        amount = sum(p.quantity * p.product.discounted_price for p in cart)
-        total_amount = amount + 40  # assuming 40 is some fixed additional charge
-        
-        data = {
-            'amount': amount,
-            'total_amount': total_amount 
-        }
-        
+        prod_id = request.GET.get('prod_id')
+        try:
+            c = Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
+            c.delete()
+            user = request.user
+            cart = Cart.objects.filter(user=user)
+            amount = sum(p.quantity * p.product.discounted_price for p in cart)
+            totalamount = amount + 40
+            data = {
+                'amount': amount,
+                'totalamount': totalamount
+            }
+        except Cart.DoesNotExist:
+            data = {
+                'error': 'Cart item not found'
+            }
         return JsonResponse(data)
-    
-    return redirect(JsonResponse, 'checkout.html')
 
-@login_required    
+@login_required
 def plus_wishlist(request):
     if request.method == 'GET':
-        product_id = request.GET.get('prod_id')
-        print('prod_id')
-        product = Product.objects.get(id=product_id)
+        prod_id = request.GET.get('prod_id')
+        product = Product.objects.get(id=prod_id)
         user = request.user
         Wishlist(user=user, product=product).save()
         data = {
             'message': 'Wishlist Added Successfully',
-        }    
+        }
         return JsonResponse(data)
 
-@login_required    
+@login_required
 def minus_wishlist(request):
     if request.method == 'GET':
-        product_id = request.GET.get('prod_id')
-        print('prod_id')
-        product = Product.objects.get(id=product_id)
+        prod_id = request.GET.get('prod_id')
+        product = Product.objects.get(id=prod_id)
         user = request.user
         Wishlist.objects.filter(user=user, product=product).delete()
         data = {
             'message': 'Wishlist Removed Successfully',
-        }    
+        }
         return JsonResponse(data)
 
 @login_required
