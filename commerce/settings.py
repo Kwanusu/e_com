@@ -85,6 +85,21 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}
+
  
 CORS_ALLOW_CREDENTIALS = True
 
@@ -176,11 +191,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 STRIPE_PUBLISHABLE_KEY = 'pk_test_51PVxSP2KYLwdKQxe5VawpNe8iikifCFgjE4ac7XfaGq1E5UlD3w8zfhQDguk38Tw1kk2khvRje4WGx6oTxtFSIv800xtTDtdZu'
 STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
-# settings.py
 
-STRIPE_SUCCESS_URL = 'http://localhost:3000/success'
-STRIPE_CANCEL_URL = 'http://localhost:3000/cancel'
+STRIPE_SUCCESS_URL = 'http://localhost:8000/success'
+STRIPE_CANCEL_URL = 'http://localhost:8000/cancel'

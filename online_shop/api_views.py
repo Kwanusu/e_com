@@ -359,38 +359,75 @@ def admin_dashboard(request):
         'message': 'Welcome to the admin dashboard'
     }
     return Response(data)
+# from django.contrib.auth.views import LoginView
+# from django.contrib import messages
+# from django.shortcuts import redirect
+# from django.urls import reverse_lazy
 
-class AdminProductList(generics.ListAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+# class CustomLoginView(LoginView):
+#     template_name = 'registration/login.html'
 
-class AdminProductCreate(generics.CreateAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+#     def form_valid(self, form):
+#         response = super().form_valid(form)
+#         if self.request.user.is_superuser:
+#             messages.success(self.request, 'admin')
+#         else:
+#             messages.success(self.request, 'user')
+#         return response
 
-class AdminProductUpdate(generics.UpdateAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-    lookup_field = 'pk'
+#     def get_success_url(self):
+#         return reverse_lazy('home')  # Default success URL; can be any URL
 
-class AdminProductDelete(generics.DestroyAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-    lookup_field = 'pk'
+
+
+# class AdminProductList(generics.ListAPIView):
+#     queryset = Product.objects.all()
+#     serializer_class = ProductSerializer
+
+# class AdminProductCreate(generics.CreateAPIView):
+#     queryset = Product.objects.all()
+#     serializer_class = ProductSerializer
+
+# class AdminProductUpdate(generics.UpdateAPIView):
+#     queryset = Product.objects.all()
+#     serializer_class = ProductSerializer
+#     lookup_field = 'pk'
+
+# class AdminProductDelete(generics.DestroyAPIView):
+#     queryset = Product.objects.all()
+#     serializer_class = ProductSerializer
+#     lookup_field = 'pk'
 # views.py
-class SearchView(APIView):
-    permission_classes = [IsAuthenticated]
+import logging
 
+logger = logging.getLogger(__name__)
+
+class SearchView(APIView):
     def get(self, request):
-        query = request.GET.get('search', '')
-        totalItem = 0
-        wishItem = 0
-        if request.user.is_authenticated:
-           totalItem = Cart.objects.filter(user=request.user).count()
-           wishItem = Wishlist.objects.filter(user=request.user).count()
-           products = Product.objects.filter(Q(title__icontains=query))
-           product_list = ProductSerializer(products, many=True).data  # Serialize the products
-           return JsonResponse({'products': product_list, 'totalItem': totalItem, 'wishItem': wishItem})
+        try:
+            query = request.GET.get('q', '')
+            logger.debug(f"Search query: {query}")
+            
+            totalItem = 0
+            wishItem = 0
+            
+            if request.user.is_authenticated:
+                totalItem = Cart.objects.filter(user=request.user).count()
+                wishItem = Wishlist.objects.filter(user=request.user).count()
+            
+            if query:
+                products = Product.objects.filter(Q(title__icontains=query))
+            else:
+                products = Product.objects.none()
+                
+            product_list = ProductSerializer(products, many=True).data  # Serialize the products
+            
+            logger.debug(f"Products found: {len(product_list)}")
+            
+            return JsonResponse({'products': product_list, 'totalItem': totalItem, 'wishItem': wishItem})
+        except Exception as e:
+            logger.error(f"Error during search: {e}")
+            return JsonResponse({'error': str(e)}, status=500)
         
 class UserLogin(APIView):
     permission_classes = (permissions.AllowAny,)

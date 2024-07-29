@@ -1,0 +1,11 @@
+
+{% block title %}{% endblock title %}
+
+{% block content %}
+<form method="post" action="{% url 'save_payment_method' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Payment Method</button>
+  </form>
+
+  {% endblock content %}  

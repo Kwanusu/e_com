@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row my-3">
+        <div class="col-sm-6 offset-sm-3">
+            <h3 class="mt-4">{{ form.instance.pk|yesno:"Update User,Create User" }}</h3>
+            <hr>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary mt-3">{{ form.instance.pk|yesno:"Update,Create" }}</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

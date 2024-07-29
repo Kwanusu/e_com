@@ -3,24 +3,29 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, User
 from django.contrib.auth.models import User
 from .models import Customer
 from .models import Payment
+from django.core.exceptions import ValidationError
 
 class LoginForm(AuthenticationForm):
     username = UsernameField(widget=forms.TextInput(attrs={'autofocus': 'True',
     'class': 'form-control'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'autocomplete': 'current-password',
     'class': 'form-control'}))
-    
+
 class CustomerRegistrationForm(UserCreationForm):
-    username = forms.CharField(widget=forms.TextInput(attrs={'autofocus': 'True',
-    'class': 'form-control'}))
-    email = forms.EmailField(widget=forms.EmailInput(attrs={
-    'class': 'form-control'}))
+    username = forms.CharField(widget=forms.TextInput(attrs={'autofocus': 'True', 'class': 'form-control'}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput(attrs={'class': 'form-control'}))
     password2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput(attrs={'class': 'form-control'}))   
     
     class Meta:
         model = User
         fields = ['username', 'email', 'password1', 'password2']
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise ValidationError('A user with that email already exists.')
+        return email
         
 class MyPasswordChangeForm(PasswordChangeForm):
     old_password = forms.CharField(label='Old Password', widget=forms.PasswordInput(attrs=
@@ -65,3 +70,9 @@ class PaymentForm(forms.ModelForm):
             'stripe_payment_id': forms.TextInput(attrs={'class': 'form-control'}),
         }
         
+class PaymentIntentForm(forms.Form):
+    amount = forms.DecimalField(label='Amount (USD)', max_digits=10, decimal_places=2) 
+    
+    
+class PaymentMethodForm(forms.Form):
+    payment_method_id = forms.CharField(widget=forms.HiddenInput())            

@@ -56,7 +56,7 @@ class WishlistModelAdmin(admin.ModelAdmin):
 
 class CustomUserAdmin(UserAdmin):
     add_form = CustomerRegistrationForm
-    form = UserChangeForm  # Changed from MyPasswordChangeForm to UserChangeForm
+    form = UserChangeForm  
     model = User
     list_display = ['username', 'email', 'is_staff', 'is_active']
     list_filter = ['is_staff', 'is_active']
