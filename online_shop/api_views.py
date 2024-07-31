@@ -1,6 +1,5 @@
 
 import json
-from urllib import request
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -20,7 +19,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth import update_session_auth_hash
 from rest_framework.permissions import IsAuthenticated
-from .serializers import PasswordChangeSerializer, PasswordResetSerializer, SetPasswordSerializer, ProfileSerializer
+from .serializers import ProfileSerializer
 from .models import Customer
 from django.db.models import Q
 from .models import CarouselImage
@@ -28,6 +27,17 @@ from .serializers import CarouselImageSerializer
 from django.shortcuts import get_object_or_404
 from .models import Cart, Wishlist, Product
 from .serializers import CartSerializer, WishlistSerializer
+import json
+import stripe
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST, require_GET
+from django.utils.encoding import force_bytes, force_str
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.html import strip_tags
 
 class HomeView(APIView):
    permission_classes = (IsAuthenticated, )
@@ -358,46 +368,6 @@ def admin_dashboard(request):
     data = {
         'message': 'Welcome to the admin dashboard'
     }
-    return Response(data)
-# from django.contrib.auth.views import LoginView
-# from django.contrib import messages
-# from django.shortcuts import redirect
-# from django.urls import reverse_lazy
-
-# class CustomLoginView(LoginView):
-#     template_name = 'registration/login.html'
-
-#     def form_valid(self, form):
-#         response = super().form_valid(form)
-#         if self.request.user.is_superuser:
-#             messages.success(self.request, 'admin')
-#         else:
-#             messages.success(self.request, 'user')
-#         return response
-
-#     def get_success_url(self):
-#         return reverse_lazy('home')  # Default success URL; can be any URL
-
-
-
-# class AdminProductList(generics.ListAPIView):
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-
-# class AdminProductCreate(generics.CreateAPIView):
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-
-# class AdminProductUpdate(generics.UpdateAPIView):
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-#     lookup_field = 'pk'
-
-# class AdminProductDelete(generics.DestroyAPIView):
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-#     lookup_field = 'pk'
-# views.py
 import logging
 
 logger = logging.getLogger(__name__)
@@ -467,29 +437,66 @@ class PasswordChangeView(APIView):
             return Response({'status': 'password_changed'}, status=status.HTTP_200_OK)
         return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
+from .serializers import PasswordResetRequestSerializer, SetPasswordSerializer
+
 class PasswordResetView(APIView):
 
     def post(self, request, *args, **kwargs):
-        form = PasswordResetForm(data=request.data)
-        if form.is_valid():
-            form.save(
-                request=request,
-                use_https=request.is_secure(),
-                email_template_name='registration/password_reset_email.html'
-            )
-            return Response({'status': 'password_reset_email_sent'}, status=status.HTTP_200_OK)
-        return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            try:
+                user = User.objects.get(email=email)
+                email_subject = "Password Reset Requested"
+                frontend_domain = 'http://127.0.0.1:5173'
+                context = {
+                    'user': user,
+                    'frontend_domain': frontend_domain,
+                    'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                    'token': default_token_generator.make_token(user),
+                }
+                
+                html_content = render_to_string("password_reset_email.html", context)
+                text_content = strip_tags(html_content)
+                
+                email_message = EmailMultiAlternatives(
+                    subject=email_subject,
+                    body=text_content,
+                    from_email=settings.EMAIL_HOST_USER,
+                    to=[email]
+                )
+                email_message.attach_alternative(html_content, "text/html")
+                email_message.send()
+                
+                return Response({'status': 'password_reset_email_sent'}, status=status.HTTP_200_OK)
+            except User.DoesNotExist:
+                return Response({'error': 'No user found with this email address.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SetPasswordView(APIView):
 
     def post(self, request, *args, **kwargs):
-        user = User.objects.get(pk=request.data['user_id'])
-        form = SetPasswordForm(user=user, data=request.data)
-        if form.is_valid():
-            form.save()
-            return Response({'status': 'password_set'}, status=status.HTTP_200_OK)
-        return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        serializer = SetPasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            uidb64 = serializer.validated_data['uidb64']
+            token = serializer.validated_data['token']
+            new_password1 = serializer.validated_data['new_password1']
+            new_password2 = serializer.validated_data['new_password2']
+            
+            try:
+                uid = force_str(urlsafe_base64_decode(uidb64))
+                user = User.objects.get(pk=uid)
+            except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+                return Response({'error': 'Invalid token or user ID.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if user is not None and default_token_generator.check_token(user, token):
+                form = SetPasswordForm(user=user, data=request.data)
+                if form.is_valid():
+                    form.save()
+                    return Response({'status': 'password_set'}, status=status.HTTP_200_OK)
+                return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid token or user ID.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -572,13 +579,6 @@ class RemoveWishlistItemView(APIView):
         wishlist_item = get_object_or_404(Wishlist, user=user, product_id=product_id)
         wishlist_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
-import json
-import stripe
-from django.conf import settings
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST, require_GET
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 

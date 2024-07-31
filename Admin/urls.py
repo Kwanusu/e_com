@@ -8,9 +8,8 @@ urlpatterns = [
     path('products/create/', admin_product_create, name='admin_product_create'),
     path('products/update/<int:pk>/', admin_product_update, name='admin_product_update'),
     path('products/delete/<int:pk>/', admin_product_delete, name='admin_product_delete'),
-    path('admin/users/', admin_user_list, name='admin_user_list'),
-    path('admin/users/create/', admin_user_create, name='admin_user_create'),
-    path('admin/users/update/<int:pk>/', admin_user_update, name='admin_user_update'),
-    path('admin/users/delete/<int:pk>/', admin_user_delete, name='admin_user_delete'),
-    # Add more admin URLs as needed
+    path('users/', admin_user_list, name='admin_user_list'),
+    path('users_create/', admin_user_create, name='admin_user_create'),
+    path('users_update/<int:pk>/', admin_user_update, name='admin_user_update'),
+    path('users_delete/<int:pk>/', admin_user_delete, name='admin_user_delete'),
 ]

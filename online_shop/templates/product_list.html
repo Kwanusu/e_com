@@ -14,8 +14,8 @@
                     <h4 class="card-title">
                         <a href="{% url 'product_detail' product.pk %}">{{ product.title }}</a>
                     </h4>
-                    <h5>Kshs.{{ product.discounted_price }}/-</h5>
-                    <small class="text-decoration-line-through text-muted"><del>Kshs. {{ product.selling_price }}/-</small></del>
+                    <h5>$.{{ product.discounted_price }}/-</h5>
+                    <small class="text-decoration-line-through text-muted"><del>$. {{ product.selling_price }}/-</small></del>
                     <p class="card-text">{{ product.description|truncatewords:20 }}</p>
                 </div>
                 <div class="card-footer">
@@ -52,7 +52,7 @@
                 </div>
               </div>
             {% endfor %}
-            <p class="fw-bold">Total Cost + Kshs. 40 = {{totalamount}}</p>
+            <p class="fw-bold">Total Cost + $. 40 = {{totalamount}}</p>
             <small>Terms and Conditions: </small>
         </div>
         <div class="col-sm-4 offset-sm-1">

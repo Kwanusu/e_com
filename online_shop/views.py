@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from .forms import CustomerProfileForm, CustomerRegistrationForm, LoginForm, MyPasswordResetForm
+from .forms import CustomerProfileForm, CustomerRegistrationForm, LoginForm, MyPasswordResetForm, MySetPasswordForm
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate, login
 from .models import CarouselImage
@@ -22,6 +22,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 from django.core.mail import EmailMultiAlternatives
+from django.contrib.auth.forms import SetPasswordForm
+from django.utils.encoding import force_str
+from django.utils.html import strip_tags
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -29,11 +32,11 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 @login_required
 def home(request):
-    totalItem = 0
-    wishItem = 0
-    if request.user.is_authenticated:
-        totalItem = Cart.objects.filter(user=request.user).count()
-        wishItem = Wishlist.objects.filter(user=request.user).count()
+    # totalItem = 0
+    # wishItem = 0
+    # if request.user.is_authenticated:
+    #     totalItem = Cart.objects.filter(user=request.user).count()
+    #     wishItem = Wishlist.objects.filter(user=request.user).count()
     return render(request, 'home.html', locals())
 
 def carousel_images(request):
@@ -138,7 +141,7 @@ class CustomerRegistrationView(View):
 
 def password_reset_request(request):
     if request.method == 'POST':
-        email = request.POST['email']
+        email = request.POST.get('email')
         try:
             user = User.objects.get(email=email)
             email_subject = "Password Reset Requested"
@@ -149,22 +152,20 @@ def password_reset_request(request):
                 'token': default_token_generator.make_token(user),
             }
             
-            text_content = render_to_string("password_reset_email.html", context)
+            # Render HTML content
             html_content = render_to_string("password_reset_email.html", context)
+            # Create plain text content from HTML
+            text_content = strip_tags(html_content)
             
-            # message = render_to_string("password_reset_email.html", {
-            #     'user': user,
-            #     'domain': '127.0.0.1:8000',
-            #     'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-            #     'token': default_token_generator.make_token(user),
-            # })
-            email_message = EmailMultiAlternatives(email_subject, text_content, settings.EMAIL_HOST_USER, [email])
+            email_message = EmailMultiAlternatives(
+                subject=email_subject,
+                body=text_content,
+                from_email=settings.EMAIL_HOST_USER,
+                to=[email]
+            )
             email_message.attach_alternative(html_content, "text/html")
             email_message.send()
             
-            
-            # email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
-            # email_message.send()
             messages.success(request, 'A link to reset your password has been sent to your email.')
             return redirect('login')
         except User.DoesNotExist:
@@ -174,23 +175,23 @@ def password_reset_request(request):
 
 def password_reset_confirm(request, uidb64, token):
     try:
-        uid = force_text(urlsafe_base64_decode(uidb64))
+        uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
     
     if user is not None and default_token_generator.check_token(user, token):
         if request.method == 'POST':
-            password = request.POST['pass1']
-            confirm_password = request.POST['pass2']
-            if password != confirm_password:
-                messages.warning(request, "Passwords did not match.")
-                return render(request, 'password_reset_confirm.html', {'uidb64': uidb64, 'token': token})
-            user.set_password(password)
-            user.save()
-            messages.success(request, 'Your password has been successfully reset.')
-            return redirect('login')
-        return render(request, 'password_reset_confirm.html', {'uidb64': uidb64, 'token': token})
+            form = SetPasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Your password has been successfully reset.')
+                return redirect('login')
+            else:
+                messages.warning(request, "There were errors with your submission. Please correct them and try again.")
+        else:
+            form = SetPasswordForm(user)
+        return render(request, 'password_reset_confirm.html', {'form': form})
     else:
         messages.warning(request, 'The reset link is invalid, possibly because it has already been used.')
         return redirect('password_reset')
@@ -609,7 +610,7 @@ def minus_wishlist(request):
         }
         return JsonResponse(data)
 
-@login_required
+# @login_required
 def profile_view(request):
     if request.method == 'POST':
         form = CustomerProfileForm(request.POST, instance=request.user)
