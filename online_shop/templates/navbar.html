@@ -56,6 +56,9 @@
                         <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
                         <li><a class="dropdown-item" href="{% url 'orders' %}">Orders</a></li>
                         <li><a class="dropdown-item" href="{% url 'passwordchange' %}">Change Password</a></li>
+                        {% if request.user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'admin_dashboard' %}">Admin Dashboard</a></li>
+                        {% endif %}
                         <li>
                             <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
                                 {% csrf_token %}

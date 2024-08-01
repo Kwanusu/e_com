@@ -1,3 +1,4 @@
+from urllib import request
 import stripe
 from django.conf import settings
 from django.http import BadHeaderError, HttpResponse, JsonResponse
@@ -113,14 +114,34 @@ class CategoryTitle(View):
 @method_decorator(login_required, name='dispatch')     
 class ProductDetail(View):
     def get(self, request, pk):
-        product = Product.objects.get(pk=pk)
-        wishlist = Wishlist.objects.filter(Q(product=product) & Q(user=request.user)) 
+        product = get_object_or_404(Product, pk=pk)
+        discount_percentage = 100 - (product.discounted_price / product.selling_price * 100)
+        wishlist = Wishlist.objects.filter(Q(product=product) & Q(user=request.user)).exists()
         totalItem = 0
         wishItem = 0
         if request.user.is_authenticated:
-           totalItem = Cart.objects.filter(user=request.user).count()
-           wishItem = Wishlist.objects.filter(user=request.user).count()
-        return render(request, 'product_detail.html', locals())
+            totalItem = Cart.objects.filter(user=request.user).count()
+            wishItem = Wishlist.objects.filter(user=request.user).count()
+        
+        context = {
+            'product': product,
+            'discount_percentage': discount_percentage,
+            'wishlist': wishlist,
+            'totalItem': totalItem,
+            'wishItem': wishItem,
+        }
+        
+        return render(request, 'product_detail.html', context)
+         
+    
+    def product_detail(request, pk):
+        product = get_object_or_404(Product, pk=pk)
+        discount_percentage = 100 - (product.discounted_price / product.selling_price * 100)
+        return render(request, 'product_detail.html', {
+            'product': product,
+            'discount_percentage': discount_percentage,
+            'wishlist': False,  # Replace this with your actual logic for checking wishlist
+        })
 class CustomerRegistrationView(View):
     def get(self, request):
         form = CustomerRegistrationForm()
