@@ -6,17 +6,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from online_shop.validations import  validate_email, validate_password
 from .models import Customer, Cart, Payment, OrderPlaced, Wishlist
-from .serializers import ProductDetailSerializer, ProductSerializer, CustomerSerializer, CartSerializer, PaymentSerializer, OrderPlacedSerializer, ProfileSerializer, UserSerializer, UserLoginSerializer, RegisterSerializer, WishlistSerializer
+from .serializers import CustomerProfileSerializer, ProductDetailSerializer, ProductSerializer, CustomerSerializer, CartSerializer, PaymentSerializer, OrderPlacedSerializer, ProfileSerializer, UserSerializer, UserLoginSerializer, RegisterSerializer, WishlistSerializer
 from .models import Product
-from rest_framework import generics, permissions, status
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .forms import LoginForm
-from django.contrib.auth import login, logout
-from rest_framework.authentication import SessionAuthentication
+from django.contrib.auth import logout
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm, SetPasswordForm
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth import update_session_auth_hash
 from rest_framework.permissions import IsAuthenticated
 from .serializers import ProfileSerializer
@@ -38,6 +36,8 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.html import strip_tags
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 
 class HomeView(APIView):
    permission_classes = (IsAuthenticated, )
@@ -50,6 +50,31 @@ class CarouselImagesAPIView(APIView):
         images = CarouselImage.objects.all()
         serializer = CarouselImageSerializer(images, many=True)
         return Response(serializer.data)
+    
+class LoginView(APIView):
+    def post(self, request):
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            return JsonResponse({'message': 'Login successful'}, status=status.HTTP_200_OK)
+        else:
+            return JsonResponse({'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+def check_auth(request):
+    is_authenticated = request.user.is_authenticated
+    return Response({'isAuthenticated': is_authenticated})
+    
    
 class LogoutView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -338,29 +363,6 @@ class WishlistView(APIView):
         wishlist.delete()
         return Response({"status": "success", "data": "Wishlist deleted"}, status=status.HTTP_200_OK)
 
-class LoginView(APIView):
-    def post(self, request):
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            return JsonResponse({'message': 'Login successful'}, status=status.HTTP_200_OK)
-        else:
-            return JsonResponse({'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-class RegisterView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request, *args):
-        serializer = RegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET'])
-def check_auth(request):
-    is_authenticated = request.user.is_authenticated
-    return Response({'isAuthenticated': is_authenticated})
         
 
 @api_view(['GET'])
@@ -399,19 +401,39 @@ class SearchView(APIView):
             logger.error(f"Error during search: {e}")
             return JsonResponse({'error': str(e)}, status=500)
         
-class UserLogin(APIView):
-    permission_classes = (permissions.AllowAny,)
-    authentication_classes = (SessionAuthentication,)
+@method_decorator(login_required, name='dispatch')
+class UpdateAddressAPIView(APIView):
+    def get(self, request, pk):
+        try:
+            customer = Customer.objects.get(pk=pk)
+        except Customer.DoesNotExist:
+            return Response({"error": "Address not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = CustomerProfileSerializer(customer)
+        total_items = Cart.objects.filter(user=request.user).count()
+        wish_items = Wishlist.objects.filter(user=request.user).count()
+        
+        response_data = {
+            "customer": serializer.data,
+            "total_items": total_items,
+            "wish_items": wish_items,
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
     
-    def post(self, request):
-        data = request.data
-        assert validate_email(data)
-        assert validate_password(data)
-        serializer = UserLoginSerializer(data=data)
-        if serializer.is_valid(raise_exception=True):
-            user = serializer.check_user(data)
-            login(request, user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+    def post(self, request, pk):
+        try:
+            customer = Customer.objects.get(pk=pk)
+        except Customer.DoesNotExist:
+            return Response({"error": "Address not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = CustomerProfileSerializer(customer, data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Profile updated successfully"}, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class UserLogout(APIView):
     def post(self, request):
@@ -419,12 +441,27 @@ class UserLogout(APIView):
         return Response(status=status.HTTP_200_OK)
     
     
-class UserView(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = (SessionAuthentication,)
-    def get(self, request):
-        serializer = UserSerializer(request.user)
-        return Response({'user': serializer.data}, status=status.HTTP_200_OK) 
+class CategoryView(APIView):
+    def get(self, request, val):
+        totalItem = 0
+        wishItem = 0
+
+        if request.user.is_authenticated:
+            totalItem = Cart.objects.filter(user=request.user).count()
+            wishItem = Wishlist.objects.filter(user=request.user).count()
+
+        products = Product.objects.filter(category=val)
+        product_serializer = ProductSerializer(products, many=True)
+        titles = Product.objects.filter(category=val).values('title')
+
+        response_data = {
+            'totalItem': totalItem,
+            'wishItem': wishItem,
+            'products': product_serializer.data,
+            'titles': list(titles),
+        }
+
+        return Response(response_data)
             
 class PasswordChangeView(APIView):
     permission_classes = [IsAuthenticated]

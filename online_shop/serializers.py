@@ -16,7 +16,11 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['title', 'selling_price', 'discounted_price', 'description', 'composition', 'prodapp', 'category', 'product_image']
-    
+ 
+class CustomerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = ['name', 'locality', 'city', 'mobile', 'state', 'zipcode']    
     
 class CustomerSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
