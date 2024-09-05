@@ -261,19 +261,19 @@ class PasswordResetView(View):
         
         messages.error(request, 'An invalid email has been entered.')
         return render(request, 'password_reset.html', {'form': form})
-class ActivateAccountView(View):
-    def get(self, request, uidb64, token):
-        try:
-            uid = force_text(urlsafe_base64_decode(uidb64))
-            user = User.objects.get(pk=uid)
-        except Exception as identifier:
-            user = None
-        if user is not None and default_token_generator.check_token(user, token):
-            user.is_active = True
-            user.save()
-            messages.info(request, "Account activated successfully")
-            return redirect('login')
-        return render(request, 'activatefail.html')  
+# class ActivateAccountView(View):
+#     def get(self, request, uidb64, token):
+#         try:
+#             uid = force_text(urlsafe_base64_decode(uidb64))
+#             user = User.objects.get(pk=uid)
+#         except Exception as identifier:
+#             user = None
+#         if user is not None and default_token_generator.check_token(user, token):
+#             user.is_active = True
+#             user.save()
+#             messages.info(request, "Account activated successfully")
+#             return redirect('login')
+#         return render(request, 'activatefail.html')  
 @method_decorator(login_required, name='dispatch')             
 class ProfileView(View):
     def get(self, request):

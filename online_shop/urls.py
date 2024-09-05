@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.contrib.auth import views as auth_view
 from django.urls import path
 from . import views, api_views
-from .forms import LoginForm, PasswordChangeForm, MyPasswordResetForm
+from .forms import PasswordChangeForm
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -84,7 +84,7 @@ urlpatterns = [
     # Login authentication
     path('password_reset/', views.password_reset_request, name='password_reset'),
     path('reset/<uidb64>/<token>/', views.password_reset_confirm, name='password_reset_confirm'),
-    path('activate/<uidb64>/<token>', views.ActivateAccountView.as_view(), name='activate'),
+    # path('activate/<uidb64>/<token>', views.ActivateAccountView.as_view(), name='activate'),
     path('registration/', views.CustomerRegistrationView.as_view(), name='customerregistration'),
     path('accounts/login/', views.login_view, name='login'),
     # path('reset/<uidb64>/<token>/', auth_view.PasswordResetView.as_view(template_name='passwordchange.html'), name='password_change'),

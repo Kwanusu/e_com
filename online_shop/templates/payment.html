@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+Payment Confirmation
+{% endblock title %}
+{% block content %}
+    <div class="container mt-5">
+        <h1 class="text-center">Payment Confirmation</h1>
+        <div class="card">
+            <div class="card-body">
+                <p class="card-text">Amount: {{ amount }} {{ currency }}</p>
+                <p class="card-text">Your payment was successful!</p>
+                <p class="card-text">Client Secret: {{ client_secret }}</p>
+                <a href="/" class="btn btn-primary">Go to Home</a>
+            </div>
+        </div>
+    </div>
+    {% endblock content %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+Payment Error
+{% endblock title %}
+    
+{% block content %}
+    <div class="container mt-5">
+        <h1 class="text-center text-danger">Payment Error</h1>
+        <div class="card border-danger">
+            <div class="card-body">
+                <p class="card-text">An error occurred while processing your payment:</p>
+                <p class="card-text text-danger">{{ error_message }}</p>
+                <a href="/payment-form" class="btn btn-primary">Try Again</a>
+            </div>
+        </div>
+    </div>
+    {% endblock content %}
+
